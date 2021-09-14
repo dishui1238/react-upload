@@ -1,6 +1,6 @@
 import { message } from "antd";
 
-const DEFAULT_SIZE = 1024 * 10 * 10; // 100k
+const DEFAULT_SIZE = 1024 * 1024 * 10; // 10M
 
 export function allowUpload(file: File) {
   let isValidFileType = [

@@ -19,7 +19,6 @@ app.use(express.static(path.resolve(__dirname, "public"))); // 静态文件中�
 app.post(
   "/upload/:filename/:chunk_name",
   async function (req: Request, res: Response, _next: NextFunction) {
-    debugger;
     let { filename, chunk_name } = req.params;
     // let start: number = Number(req.params.start);
     let chunk_dir = path.resolve(TEMP_DIR, filename);
@@ -34,12 +33,12 @@ app.post(
       ws.close();
       res.json({ success: true });
     });
-    // req.on("error", () => {
-    //   ws.close();
-    // });
-    // req.on("close", () => {
-    //   ws.close();
-    // });
+    req.on("error", () => {
+      ws.close();
+    });
+    req.on("close", () => {
+      ws.close();
+    });
     req.pipe(ws);
   }
 );

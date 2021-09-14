@@ -76,7 +76,6 @@ function Upload() {
   };
 
   const uploadParts = async (partList: Part[], filename: string) => {
-    console.log('uploadParts');
     try {
       let requests = createRequests(partList, filename);
       await Promise.all(requests);
