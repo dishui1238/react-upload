@@ -5,28 +5,49 @@ import createError from "http-errors";
 import cors from "cors";
 import path from "path";
 import fs from "fs-extra";
-import multiparty from "multiparty"; // 处理文件上传
-import { PUBLIC_DIR } from "./utils";
+// import multiparty from "multiparty"; // 处理文件上传
+import { TEMP_DIR, mergeChunks } from "./utils";
 
 const app = express();
 app.use(logger("dev")); // 开发日志格式
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors()); // 跨域
+app.use(cors()); // 跨域 设置响应头
 app.use(express.static(path.resolve(__dirname, "public"))); // 静态文件中间件
 
-app.post("/upload", (req: Request, res: Response, next: NextFunction) => {
-  const form = new multiparty.Form();
-  form.parse(req, async (err: any, fields, files) => {
-    if (err) return next(err);
-    console.log(fields, files);
-    let filename = fields.filename[0]; //'dog.jpg'
-    let chunk = files.chunk[0]; //{}
-    await fs.move(chunk.path, path.resolve(PUBLIC_DIR, filename), {
-      overwrite: true,
+// 处理文件上传 不分片
+app.post(
+  "/upload/:filename/:chunk_name",
+  async function (req: Request, res: Response, _next: NextFunction) {
+    debugger;
+    let { filename, chunk_name } = req.params;
+    // let start: number = Number(req.params.start);
+    let chunk_dir = path.resolve(TEMP_DIR, filename);
+    let exist = await fs.pathExists(chunk_dir);
+    if (!exist) {
+      await fs.mkdirs(chunk_dir);
+    }
+    let chunkFilePath = path.resolve(chunk_dir, chunk_name);
+    //flags append 后面断点续传
+    let ws = fs.createWriteStream(chunkFilePath, { flags: "a" });
+    req.on("end", () => {
+      ws.close();
+      res.json({ success: true });
     });
-    res.json({ success: true });
-  });
+    // req.on("error", () => {
+    //   ws.close();
+    // });
+    // req.on("close", () => {
+    //   ws.close();
+    // });
+    req.pipe(ws);
+  }
+);
+// 合并文件
+app.get("/merge/:filename", async function (req: Request, res: Response) {
+  let { filename } = req.params;
+  await mergeChunks(filename);
+  res.json({ success: true });
 });
 
 // 没有路由处理 就走404错误

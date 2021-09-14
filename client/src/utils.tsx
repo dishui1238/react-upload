@@ -1,5 +1,7 @@
 import { message } from "antd";
 
+const DEFAULT_SIZE = 1024 * 10 * 10; // 100k
+
 export function allowUpload(file: File) {
   let isValidFileType = [
     "image/jpeg",
@@ -16,6 +18,27 @@ export function allowUpload(file: File) {
     message.error("上传的文件不能大于2G");
   }
   return isValidFileType && isLessThan2G;
+}
+
+export interface Part {
+  chunk: Blob;
+  size: number;
+  filename?: string;
+  chunk_name?: string;
+  loaded?: number;
+  percent?: number;
+  xhr?: XMLHttpRequest;
+}
+
+export function createChunks(file: File): Part[] {
+  let current = 0;
+  let partList: Part[] = [];
+  while (current < file.size) {
+    const chunk: Blob = file.slice(current, current + DEFAULT_SIZE);
+    partList.push({ chunk, size: chunk.size });
+    current += DEFAULT_SIZE;
+  }
+  return partList;
 }
 
 interface OPTIONS {
