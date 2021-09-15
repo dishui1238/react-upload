@@ -1,6 +1,6 @@
 import { message } from "antd";
 
-const DEFAULT_SIZE = 1024 * 1024 * 10; // 10M
+const DEFAULT_SIZE = 1024 * 1024 * 50; // 50M
 
 export function allowUpload(file: File) {
   let isValidFileType = [
@@ -47,6 +47,8 @@ interface OPTIONS {
   baseURL?: string;
   url: string;
   data?: any;
+  setXHR?: any;
+  onProgress?: any;
 }
 
 export function request(options: OPTIONS): Promise<any> {
@@ -70,6 +72,7 @@ export function request(options: OPTIONS): Promise<any> {
       xhr.setRequestHeader(key, options.headers[key]);
     }
     xhr.responseType = "json";
+    xhr.upload.onprogress = options.onProgress;
 
     /**
       XHR.readyState == 状态（0，1，2，3，4），而且状态也是不可逆的：
@@ -89,6 +92,9 @@ export function request(options: OPTIONS): Promise<any> {
         }
       }
     };
+    if (options.setXHR) {
+      options.setXHR(xhr);
+    }
     xhr.send(options.data);
   });
 }
